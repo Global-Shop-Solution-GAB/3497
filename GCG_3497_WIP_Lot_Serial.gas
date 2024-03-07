@@ -1,0 +1,318 @@
+program.sub.screenSU.start
+gui.Form1..create
+gui.Form1..caption("Stamping and Coating")
+gui.Form1..size(4290,5565)
+gui.Form1..minx(0)
+gui.Form1..miny(0)
+gui.Form1..position(0,0)
+gui.Form1..event(unload,form1_unload)
+gui.Form1..alwaysontop(False)
+gui.Form1..fontname("Arial")
+gui.Form1..fontsize(8)
+gui.Form1..forecolor(0)
+gui.Form1..fontstyle(,,,,)
+gui.Form1..BackColor(-2147483633)
+gui.Form1..controlbox(True)
+gui.Form1..maxbutton(False)
+gui.Form1..minbutton(False)
+gui.Form1..mousepointer(0)
+gui.Form1..moveable(True)
+gui.Form1..sizeable(True)
+gui.Form1..ShowInTaskBar(True)
+gui.Form1..titlebar(True)
+
+gui.Form1.lblLot.create(label,"Lot",True,1935,255,1,200,200,True,0,Arial,8,-2147483633,0 )
+gui.Form1.lblLot.defaultvalue("")
+gui.Form1.lblLot.controlgroup(0)
+gui.Form1.txtLot.create(textbox,"",True,1215,300,0,200,500,True,0,Arial,8,-2147483643,1 )
+gui.Form1.txtLot.defaultvalue("")
+gui.Form1.txtLot.controlgroup(0)
+gui.Form1.lblStamping.create(label,"Stamping",True,1935,255,1,200,1150,True,0,Arial,8,-2147483633,0 )
+gui.Form1.lblStamping.defaultvalue("")
+gui.Form1.lblStamping.controlgroup(0)
+gui.Form1.lblCoating.create(label,"Coating Type",True,1935,255,1,200,3500,True,0,Arial,8,-2147483633,0 )
+gui.Form1.lblCoating.defaultvalue("")
+gui.Form1.lblCoating.controlgroup(0)
+gui.Form1.txtCoating.create(textbox,"",True,3585,300,0,200,3800,True,0,Arial,8,-2147483643,1 )
+gui.Form1.txtCoating.defaultvalue("")
+gui.Form1.txtCoating.controlgroup(0)
+gui.Form1.cmdSave.create(button)
+gui.Form1.cmdSave.caption("Save")
+gui.Form1.cmdSave.visible(True)
+gui.Form1.cmdSave.size(855,375)
+gui.Form1.cmdSave.zorder(0)
+gui.Form1.cmdSave.position(200,4400)
+gui.Form1.cmdSave.enabled(True)
+gui.Form1.cmdSave.fontname("Arial")
+gui.Form1.cmdSave.fontsize(8)
+gui.Form1.cmdSave.event(click,cmdsave_click)
+gui.Form1.cmdSave.defaultvalue("")
+gui.Form1.cmdSave.controlgroup(0)
+gui.Form1.cmdClear.create(button)
+gui.Form1.cmdClear.caption("Clear")
+gui.Form1.cmdClear.visible(True)
+gui.Form1.cmdClear.size(855,375)
+gui.Form1.cmdClear.zorder(0)
+gui.Form1.cmdClear.position(1360,4400)
+gui.Form1.cmdClear.enabled(True)
+gui.Form1.cmdClear.fontname("Arial")
+gui.Form1.cmdClear.fontsize(8)
+gui.Form1.cmdClear.event(click,cmdclear_click)
+gui.Form1.cmdClear.defaultvalue("")
+gui.Form1.cmdClear.controlgroup(0)
+gui.Form1.txtstamping.create(textboxm)
+gui.Form1.txtstamping.text("")
+gui.Form1.txtstamping.visible(True)
+gui.Form1.txtstamping.size(3435,1800)
+gui.Form1.txtstamping.zorder(0)
+gui.Form1.txtstamping.position(190,1475)
+gui.Form1.txtstamping.enabled(True)
+gui.Form1.txtstamping.alignment(0)
+gui.Form1.txtstamping.fontname("Arial")
+gui.Form1.txtstamping.fontsize(8)
+gui.Form1.txtstamping.BackColor(-2147483643)
+gui.Form1.txtstamping.defaultvalue("")
+gui.Form1.txtstamping.controlgroup(0)
+program.sub.screenSU.end
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.ssql.Declare(String)
+V.Local.spart.Declare(String)
+
+V.Local.slot.Declare(String)
+V.Local.sbin.Declare(String)
+V.Local.sheat.Declare(String)
+V.Local.ssn.Declare(String)
+
+'date: 12/28/2015
+'coded by: WAW
+'This is a custom GAB script that will allow the user to enter in stamping/coating information from the WIP to FG Lot/Serial screen.
+'The screen will also be made viewable from the Supply and demand screen
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+'if the populate hook on the WIP to Finished GOods - Lot/Bin/Heat/Serial Number Assignment screen fires
+F.Intrinsic.Control.If(V.Caller.Hook,=,16500)
+	'set the script 1 button text as Stamping & Coating
+	V.Passed.000116.Set("Stamp/Coat")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.If(V.Caller.Hook,=,16540)
+
+	'set local variables as the passed variables
+	V.Local.spart.set(V.Passed.000008.Trim)
+	V.Local.slot.Set(V.passed.000010.Trim)
+	V.Local.sbin.Set(V.Passed.000011.Trim)
+	V.Local.sheat.Set(V.Passed.000013.Trim)
+	V.Local.ssn.Set(V.Passed.000014.Trim)
+
+	'check to see if there is already data for that part/lot/heat/bin in the cusotm table, if so display it on the custom form
+	F.Intrinsic.String.Build("Select * from GCG_3497_WIP_LotSer where PART = '{0}' and LOT = '{1}' and BIN = '{2}' and HEAT = '{3}' and SERIAL_NUMBER= '{4}'",V.Local.spart,V.Local.slot,V.Local.sbin,V.Local.sheat,V.Local.ssn,V.Local.ssql)
+	F.ODBC.Connection!conx.openrecordsetrw("rst",V.Local.ssql)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)
+		Gui.Form1.txtCoating.Text(V.odbc.conx!rst.FieldValTrim!COATING)
+		Gui.Form1.txtStamping.Text(V.ODBC.conx!rst.FieldValTrim!STAMPING)
+'		Gui.Form1.txtLot.Text(V.Local.slot.Trim)
+		
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rst.close
+	'display the custom form
+	Gui.Form1..Visible(true)
+	'set the lot textbox
+	Gui.Form1.txtLot.Text(V.Local.slot)
+	Gui.Form1.txtLot.Enabled(false)
+F.Intrinsic.Control.EndIf
+
+'if the populate hook on the query item master screen fires, change the text of the script 1 button
+F.Intrinsic.Control.If(V.Caller.Hook,=,15500,"OR",V.Caller.Hook,=,15600)
+	V.Passed.000024.Set("Stamp/Coat")
+F.Intrinsic.Control.EndIf
+
+'if the script 1 button is selected display the screen but for viewing purposes only
+F.Intrinsic.Control.If(V.Caller.Hook,=,15560,"OR",V.Caller.Hook,=,15670)
+
+	F.Intrinsic.Control.If(V.Caller.Hook,<>,15670)
+		Gui.Form1.txtCoating.Enabled(false)
+		Gui.Form1.txtLot.Enabled(false)
+		Gui.Form1.txtStamping.Enabled(false)
+		Gui.Form1.cmdClear.Enabled(false)
+		Gui.Form1.cmdSave.Enabled(false)
+	F.Intrinsic.Control.EndIf
+
+	'set local variables as the passed variables
+	F.Intrinsic.Control.If(V.Caller.Hook,=,15560)
+		V.Local.spart.set(V.Passed.000003.Trim)
+		V.Local.slot.Set(V.passed.000006)
+		V.Local.sbin.Set(V.Passed.000007)
+		V.Local.sheat.Set(V.Passed.000008)
+		V.Local.ssn.Set(V.Passed.000009)
+		
+	F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,15670)
+		V.Local.spart.set(V.Passed.000001.Trim)
+		V.Local.slot.Set(V.passed.000005)
+		V.Local.sbin.Set(V.Passed.000006)
+		V.Local.sheat.Set(V.Passed.000008)
+		V.Local.ssn.Set(V.Passed.000009)
+	F.Intrinsic.Control.EndIf
+
+	F.Intrinsic.Control.If(V.Local.slot,=,"")
+		V.Local.slot.Set("( LOT IS NULL or LOT = '')")
+	F.Intrinsic.Control.Else
+		Gui.Form1.txtLot.Text(V.Local.slot)
+		F.Intrinsic.String.Build("{0} {1}  '{2}'","LOT",=,V.Local.slot,V.Local.slot)
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.If(V.Local.sbin,=,"")
+		V.Local.sbin.Set("(BIN IS NULL or BIN = '')")
+	F.Intrinsic.control.Else
+		F.Intrinsic.String.Build("{0} {1} '{2}'","BIN",=,V.Local.sbin,V.Local.sbin)
+	F.Intrinsic.Control.EndIf
+
+	F.Intrinsic.Control.If(V.Local.sheat,=,"")
+		V.Local.sheat.Set("(HEAT IS NULL or HEAT = '')")
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("{0} {1} '{2}'","HEAT",=,V.Local.sheat,V.Local.sheat)
+	F.intrinsic.control.endif
+
+	F.Intrinsic.Control.If(V.Local.ssn,=,"")
+		V.Local.ssn.Set("(SERIAL_NUMBER IS NULL or SERIAL_NUMBER = '')")
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("{0} {1} '{2}'","SERIAL_NUMBER",=,V.Local.ssn,V.Local.ssn)
+	F.Intrinsic.Control.EndIf
+
+	'check to see if there is already data for that part/lot/heat/bin in the cusotm table, if so display it on the custom form
+	F.Intrinsic.String.Build("Select * from GCG_3497_WIP_LotSer where PART = '{0}' and {1} and {2} and {3} and {4}",V.Local.spart,V.Local.slot,V.Local.sbin,V.Local.sheat,V.Local.ssn,V.Local.ssql)
+	F.ODBC.Connection!conx.openrecordsetrw("rst",V.Local.ssql)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)
+		Gui.Form1.txtCoating.Text(V.odbc.conx!rst.FieldValTrim!COATING)
+		Gui.Form1.txtStamping.Text(V.ODBC.conx!rst.FieldValTrim!STAMPING)
+'		Gui.Form1.txtLot.Text(V.Local.slot.Trim)
+		
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rst.close
+
+	Gui.Form1..visible(true)
+
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3497_WIP_Lot_Serial.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form1_unload)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+
+program.sub.form1_unload.start
+F.Intrinsic.Control.SetErrorHandler("form1_unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+F.ODBC.Connection!conx.Close
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("form1_unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3497_WIP_Lot_Serial.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+program.sub.form1_unload.end
+
+program.sub.cmdsave_click.start
+F.Intrinsic.Control.SetErrorHandler("cmdsave_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.ssql.Declare(String)
+V.Local.spart.Declare(String)
+V.Local.slot.Declare(String)
+V.Local.sbin.Declare(String)
+V.Local.sheat.Declare(String)
+V.Local.ssn.Declare(String)
+
+'set local variables as the passed variables
+F.Intrinsic.Control.If(V.Caller.Hook,=,16540)
+	V.Local.spart.set(V.Passed.000008.Trim)
+	V.Local.slot.Set(V.passed.000010.Trim)
+	V.Local.sbin.Set(V.Passed.000011.Trim)
+	V.Local.sheat.Set(V.Passed.000013.Trim)
+	V.Local.ssn.Set(V.Passed.000014.Trim)
+F.Intrinsic.Control.Else
+	V.Local.spart.Set(V.Passed.000001.Trim)
+	 V.Local.slot.Set(V.Passed.000005.Trim)
+	 V.Local.sbin.Set(V.Passed.000006.Trim)
+	 V.Local.sHeat.Set(V.Passed.000008.Trim)
+	 V.Local.sSN.Set(V.Passed.000009.Trim)
+F.Intrinsic.Control.EndIf
+
+'check to see if there is already data for that part/lot/heat/bin in the cusotm table, if so update it. Otherwise add it to the table
+F.Intrinsic.String.Build("Select * from GCG_3497_WIP_LotSer where PART = '{0}' and LOT = '{1}' and BIN = '{2}' and HEAT = '{3}' and SERIAL_NUMBER = '{4}'",V.Local.spart.Trim,V.Local.slot.Trim,V.Local.sbin.Trim,V.Local.sheat.Trim,V.Local.ssn.Trim,V.Local.ssql)
+F.ODBC.Connection!conx.openrecordsetrw("rst",V.Local.ssql)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+	F.ODBC.conx!rst.AddNew
+	F.ODBC.conx!rst.Set!PART(V.Local.spart.Trim)
+	F.ODBC.conx!rst.Set!LOT(V.Local.slot.Trim)
+	F.ODBC.conx!rst.Set!SERIAL_NUMBER(V.Local.ssn.Trim)
+	F.ODBC.conx!rst.Set!HEAT(V.Local.sheat.Trim)
+	F.ODBC.conx!rst.Set!BIN(V.Local.sbin.Trim)
+	F.ODBC.conx!rst.Set!STAMPING(V.screen.Form1!txtStamping.Text)
+	F.ODBC.conx!rst.Set!COATING(V.Screen.Form1!txtCoating.Text)
+	F.ODBC.conx!rst.Update
+F.Intrinsic.Control.Else
+	F.ODBC.conx!rst.Set!STAMPING(V.screen.Form1!txtStamping.Text)
+	F.ODBC.conx!rst.Set!COATING(V.Screen.Form1!txtCoating.Text)
+	F.ODBC.conx!rst.Update
+F.Intrinsic.Control.EndIf
+
+'call the unload subroutine
+F.Intrinsic.Control.CallSub(Form1_unload)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdsave_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3497_WIP_Lot_Serial.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.callsub(Form1_unload)
+Function.Intrinsic.Control.EndIf
+program.sub.cmdsave_click.end
+
+program.sub.cmdclear_click.start
+F.Intrinsic.Control.SetErrorHandler("cmdclear_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'clear the textboxes
+Gui.Form1.txtCoating.Text("")
+Gui.Form1.txtStamping.Text("")
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdclear_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3497_WIP_Lot_Serial.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form1_unload)
+Function.Intrinsic.Control.EndIf
+program.sub.cmdclear_click.end
+
+Program.Sub.Comments.Start
+${$0$}$GCG_7375_WIP_Lot_Serial$}$WAW$}$12/28/2015
+Program.Sub.Comments.End
+
+
+
